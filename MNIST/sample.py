@@ -68,7 +68,7 @@ class Sample:
             f.write(data)
 
     def is_misbehavior(self):
-        if self.expected_label == self.predicted_label:
+        if str(self.expected_label) == str(self.predicted_label):
             return False
         else:
             return True
