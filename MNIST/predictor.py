@@ -1,5 +1,5 @@
 # For Python 3.6 we use the base keras
-import keras
+from tensorflow import keras
 #from tensorflow import keras
 
 import numpy as np

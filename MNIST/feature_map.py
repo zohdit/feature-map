@@ -15,8 +15,6 @@ import matplotlib.pyplot as plt
 
 BITMAP_THRESHOLD = 0.5
 
-mnist = tf.keras.datasets.mnist
-(_, _), (x_test, y_test) = mnist.load_data()
 
 def _basic_feature_stats():
     return {
@@ -25,7 +23,7 @@ def _basic_feature_stats():
         'missing' : 0
     }
 
-def extract_stats():
+def extract_stats(x_test, y_test):
     features = ["moves", "bitmaps", "orientation"]
     # Iteratively walk in the dataset and process all the json files. For each of them compute the statistics
     data = {}
@@ -261,7 +259,11 @@ def visualize(features, samples):
             figure.savefig(figure_file, format=file_format)
 
 if __name__ == "__main__":
-    samples = extract_stats()
+
+    mnist = tf.keras.datasets.mnist
+    (_, _), (x_test, y_test) = mnist.load_data()
+
+    samples = extract_stats(x_test, y_test)
     interval = 25
     features = []
     with open("MNIST.meta", "r") as f:
