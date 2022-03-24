@@ -18,6 +18,7 @@ class Sample:
         self.expected_label = label
         self.predicted_label = None
         self.confidence = None
+        self.performance = None
         Sample.COUNT += 1
 
     def to_dict(self):
