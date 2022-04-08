@@ -1,13 +1,15 @@
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import logging as log
 import sys
 # For Python 3.6 we use the base keras
 import keras
-#from tensorflow import keras
+# from tensorflow import keras
 from config import BITMAP_THRESHOLD
 import numpy as np
+
 # local imports
 
 IMG_SIZE = 28
@@ -20,6 +22,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 NAMESPACE = '{http://www.w3.org/2000/svg}'
+
 
 def feature_simulator(function, x):
     """
@@ -35,15 +38,12 @@ def feature_simulator(function, x):
     if function == 'orientation_calc':
         return orientation_calc(x, 0)
 
-def bitmap_count(digit, threshold):
-    image = deepcopy(digit.purified)
-    bw = np.asarray(image)
-    #bw = bw / 255.0
-    count = 0
-    for x in np.nditer(bw):
-        if x > threshold:
-            count += 1
-    return count
+
+def bitmap_count(digit, threshold, normalize=False):
+    image = np.asarray(digit.purified)
+    if normalize:
+        image = image / 255.
+    return len(image[image > threshold])
 
 
 def move_distance(digit):
@@ -52,13 +52,13 @@ def move_distance(digit):
     pattern = re.compile('([\d\.]+),([\d\.]+)\sM\s([\d\.]+),([\d\.]+)')
     segments = pattern.findall(svg_path)
     if len(segments) > 0:
-        dists = [] # distances of moves
+        dists = []  # distances of moves
         for segment in segments:
             x1 = float(segment[0])
             y1 = float(segment[1])
             x2 = float(segment[2])
             y2 = float(segment[3])
-            dist = math.sqrt(((x1-x2)**2)+((y1-y2)**2))
+            dist = math.sqrt(((x1 - x2) ** 2) + ((y1 - y2) ** 2))
             dists.append(dist)
         return int(np.sum(dists))
     else:
@@ -77,7 +77,7 @@ def orientation_calc(digit, threshold):
     X = np.array(x)
     Y = np.array(y)
     lr = LinearRegression(fit_intercept=True).fit(X, Y)
-    normalized_ori = -lr.coef_ 
+    normalized_ori = -lr.coef_
     new_ori = normalized_ori * 100
     return int(new_ori)
 
@@ -92,18 +92,20 @@ def compute_sparseness(map, x):
         sparseness = density(map, x)
     return sparseness
 
+
 def get_neighbors(b):
     neighbors = []
-    neighbors.append((b[0], b[1]+1))
-    neighbors.append((b[0]+1, b[1]+1))
-    neighbors.append((b[0]-1, b[1]+1))
-    neighbors.append((b[0]+1, b[1]))
-    neighbors.append((b[0]+1, b[1]-1))
-    neighbors.append((b[0]-1, b[1]))
-    neighbors.append((b[0]-1, b[1]-1))
-    neighbors.append((b[0], b[1]-1))
+    neighbors.append((b[0], b[1] + 1))
+    neighbors.append((b[0] + 1, b[1] + 1))
+    neighbors.append((b[0] - 1, b[1] + 1))
+    neighbors.append((b[0] + 1, b[1]))
+    neighbors.append((b[0] + 1, b[1] - 1))
+    neighbors.append((b[0] - 1, b[1]))
+    neighbors.append((b[0] - 1, b[1] - 1))
+    neighbors.append((b[0], b[1] - 1))
 
     return neighbors
+
 
 def density(map, x):
     b = x.features
@@ -113,7 +115,6 @@ def density(map, x):
         if neighbor not in map:
             density += 1
     return density
-
 
 
 def input_reshape(x):
@@ -152,8 +153,8 @@ def reshape(v):
     v = v / 255.0
     return v
 
-def setup_logging(log_to, debug):
 
+def setup_logging(log_to, debug):
     def log_exception(extype, value, trace):
         log.exception('Uncaught exception:', exc_info=(extype, value, trace))
 
@@ -167,7 +168,7 @@ def setup_logging(log_to, debug):
 
     if log_to is not None:
         file_handler = log.FileHandler(log_to, 'a', 'utf-8')
-        log_handlers.append( file_handler )
+        log_handlers.append(file_handler)
         start_msg += " ".join(["writing to file: ", str(log_to)])
 
     log_level = log.DEBUG if debug else log.INFO
