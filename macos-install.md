@@ -52,6 +52,7 @@ Install pypotrace
 ```
 git clone https://github.com/flupke/pypotrace.git
 cd pypotrace
+git checkout 76c76be2458eb2b56fcbd3bec79b1b4077e35d9e
 pip install numpy
 pip install .
 cd ..
