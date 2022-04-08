@@ -1,82 +1,19 @@
 import matplotlib
 
-from sample import Sample
-
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import logging as log
 import sys
 # For Python 3.6 we use the base keras
 import keras
+
 # from tensorflow import keras
-from config import BITMAP_THRESHOLD
-import numpy as np
 
 # local imports
 
 IMG_SIZE = 28
 
-import math
-from sklearn.linear_model import LinearRegression
-import re
-from copy import deepcopy
-import xml.etree.ElementTree as ET
 import numpy as np
-
-NAMESPACE = '{http://www.w3.org/2000/svg}'
-
-
-def feature_simulator(function, x):
-    """
-    Calculates the value of the desired feature
-    :param function: name of the method to compute the feature value
-    :param x: genotype of candidate solution x
-    :return: feature value
-    """
-    if function == 'bitmap_count':
-        return bitmap_count(x)
-    if function == 'move_distance':
-        return move_distance(x)
-    if function == 'orientation_calc':
-        return orientation_calc(x)
-
-
-def bitmap_count(sample: Sample, threshold: float = BITMAP_THRESHOLD, normalize=False):
-    image = np.asarray(sample.purified)
-    if normalize:
-        image = image / 255.
-    return len(image[image > threshold])
-
-
-def move_distance(digit):
-    root = ET.fromstring(digit.xml_desc)
-    svg_path = root.find(NAMESPACE + 'path').get('d')
-    pattern = re.compile('([\d\.]+),([\d\.]+)\sM\s([\d\.]+),([\d\.]+)')
-    segments = pattern.findall(svg_path)
-    if len(segments) > 0:
-        dists = []  # distances of moves
-        for segment in segments:
-            x1 = float(segment[0])
-            y1 = float(segment[1])
-            x2 = float(segment[2])
-            y2 = float(segment[3])
-            dist = math.sqrt(((x1 - x2) ** 2) + ((y1 - y2) ** 2))
-            dists.append(dist)
-        return int(np.sum(dists))
-    else:
-        return 0
-
-
-def orientation_calc(sample: Sample, threshold: float = 0):
-    # TODO: find out why x and y are inverted
-    # convert the image to an array and remove the 1 dimensions (bw) -> 2D array
-    image = np.squeeze(sample.purified)
-    # get the indices where the matrix is greater than the threshold
-    y, x = np.where(image > threshold)
-    lr = LinearRegression(fit_intercept=True)
-    lr.fit(x.reshape(-1, 1), y)
-    orientation = -lr.coef_[0] * 100
-    return int(orientation)
 
 
 def compute_sparseness(map, x):
