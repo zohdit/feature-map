@@ -1,14 +1,13 @@
 # For Python 3.6 we use the base keras
-from tensorflow import keras
-#from tensorflow import keras
-
 import numpy as np
+from tensorflow import keras
 
 from config import MODEL, EXPECTED_LABEL, NUM_CLASSES
+# from tensorflow import keras
+from utils import reshape
 
 
 class Predictor:
-
     # Load the pre-trained model.
     model = keras.models.load_model(MODEL)
     print("Loaded model from disk")
@@ -21,8 +20,8 @@ class Predictor:
         explabel = keras.utils.to_categorical(explabel, NUM_CLASSES)
         explabel = np.argmax(explabel.squeeze())
 
-         #Predictions vector
-        predictions = Predictor.model.predict(img)
+        # Predictions vector
+        predictions = Predictor.model.predict(reshape(img))
 
         prediction1, prediction2 = np.argsort(-predictions[0])[:2]
 

@@ -54,8 +54,8 @@ def extract_stats(x_test, y_test):
                 "expected_label": str(y_test[seed]),
                 "features": {
                     "moves": move_distance(sample),
-                    "orientation": orientation_calc(sample, 0),
-                    "bitmaps": bitmap_count(sample, BITMAP_THRESHOLD)
+                    "orientation": orientation_calc(sample),
+                    "bitmaps": bitmap_count(sample)
                 },
                 "id": sample.id,
                 "misbehaviour": misbehaviour,

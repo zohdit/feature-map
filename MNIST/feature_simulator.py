@@ -6,17 +6,15 @@ from xml.etree import ElementTree as et
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-from config import BITMAP_THRESHOLD
+from config import BITMAP_THRESHOLD, ORIENTATION_THRESHOLD
 from sample import Sample
 
 NAMESPACE = '{http://www.w3.org/2000/svg}'
 
 
-def bitmap_count(sample: Sample, threshold: float = BITMAP_THRESHOLD, normalize=False):
-    image = np.asarray(sample.purified)
-    if normalize:
-        image = image / 255.
-    return len(image[image > threshold])
+def bitmap_count(sample: Sample):
+    image = sample.purified_image
+    return len(image[image > BITMAP_THRESHOLD])
 
 
 def move_distance(sample: Sample):
@@ -38,12 +36,12 @@ def move_distance(sample: Sample):
         return 0
 
 
-def orientation_calc(sample: Sample, threshold: float = 0):
+def orientation_calc(sample: Sample):
     # TODO: find out why x and y are inverted
     # convert the image to an array and remove the 1 dimensions (bw) -> 2D array
-    image = np.squeeze(sample.purified)
+    image = sample.purified_image
     # get the indices where the matrix is greater than the threshold
-    y, x = np.where(image > threshold)
+    y, x = np.where(image > ORIENTATION_THRESHOLD)
     lr = LinearRegression(fit_intercept=True)
     lr.fit(x.reshape(-1, 1), y)
     orientation = -lr.coef_[0] * 100

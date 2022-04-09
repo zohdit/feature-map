@@ -1,9 +1,11 @@
-import rasterization_tools
 import json
 from os.path import join
+
 import matplotlib.pyplot as plt
 import numpy as np
+
 import predictor
+import rasterization_tools
 
 
 class Sample:
@@ -14,7 +16,6 @@ class Sample:
         self.seed = seed
         self.features = {}
         self.xml_desc = desc
-        self.purified = rasterization_tools.rasterize_in_memory(self.xml_desc)
         self.expected_label = label
         self.predicted_label = None
         self.confidence = None
@@ -28,16 +29,19 @@ class Sample:
                 'misbehaviour': self.is_misbehavior(),
                 'performance': str(self.confidence),
                 'features': self.features
-    }
+                }
+
+    @property
+    def purified_image(self):
+        return rasterization_tools.rasterize_in_memory(self.xml_desc)
 
     def evaluate(self):
-        ff = None          
-        self.predicted_label, self.confidence = \
-            predictor.Predictor.predict(self.purified)
+        ff = None
+        self.predicted_label, self.confidence = predictor.Predictor.predict(self.purified_image)
 
         # Calculate fitness function
         ff = self.confidence if self.confidence > 0 else -0.1
-            
+
         return ff
 
     def from_dict(self, the_dict):
@@ -48,18 +52,18 @@ class Sample:
 
     def dump(self, filename):
         data = self.to_dict()
-        filedest = filename+".json"
+        filedest = filename + ".json"
         with open(filedest, 'w') as f:
             (json.dump(data, f, sort_keys=True, indent=4))
 
     def save_png(self, filename):
-        plt.imsave(filename+'.png', self.purified.reshape(28, 28), cmap='gray', format='png')
+        plt.imsave(filename + '.png', self.purified_image.reshape(28, 28), cmap='gray', format='png')
 
     def save_npy(self, filename):
-        np.save(filename, self.purified)
-        test_img = np.load(filename+'.npy')
-        diff = self.purified - test_img
-        assert(np.linalg.norm(diff) == 0)
+        np.save(filename, self.purified_image)
+        test_img = np.load(filename + '.npy')
+        diff = self.purified_image - test_img
+        assert (np.linalg.norm(diff) == 0)
 
     def save_svg(self, filename):
         data = self.xml_desc
@@ -74,7 +78,7 @@ class Sample:
             return True
 
     def export(self, dst):
-        dst = join(dst, "mbr"+str(self.id))
+        dst = join(dst, "mbr" + str(self.id))
         self.dump(dst)
         self.save_npy(dst)
         self.save_png(dst)

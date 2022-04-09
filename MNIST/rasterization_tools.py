@@ -1,11 +1,9 @@
 import cairo
-import numpy as np
-from gi import require_version
 import gi
+import numpy as np
+
 gi.require_version("Rsvg", "2.0")
 from gi.repository import Rsvg
-
-from utils import reshape
 
 
 def rasterize_in_memory(xml_desc):
@@ -17,7 +15,4 @@ def rasterize_in_memory(xml_desc):
     img_array = np.ndarray(shape=(28, 28),
                            dtype=np.uint8,
                            buffer=buf)
-
-    img_array = reshape(img_array)
-    
     return img_array
