@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import predictor
-import rasterization_tools
 from feature_simulator import FeatureSimulator
+from utils import rasterization_tools
 
 
 class Sample:

@@ -3,8 +3,7 @@ import numpy as np
 from tensorflow import keras
 
 from config import MODEL, EXPECTED_LABEL, NUM_CLASSES
-# from tensorflow import keras
-from utils import reshape
+from utils.general import reshape
 
 
 class Predictor:
