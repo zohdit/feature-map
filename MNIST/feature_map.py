@@ -2,7 +2,7 @@ import tensorflow as tf
 
 from feature import Feature
 from utils.feature_map.preprocess import extract_samples_and_stats
-from utils.feature_map.visualize import visualize
+from utils.feature_map.visualize import visualize_map
 
 if __name__ == "__main__":
     # Load the data
@@ -16,4 +16,4 @@ if __name__ == "__main__":
         for feature_name, feature_stats in stats.to_dict().items()
     ]
     # Visualize the feature-maps
-    visualize(features, samples)
+    visualize_map(features, samples)

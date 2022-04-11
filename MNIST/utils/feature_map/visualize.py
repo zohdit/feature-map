@@ -6,10 +6,10 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 
 from config import EXPECTED_LABEL
-from utils.feature_map.compute import compute_featuremap
+from utils.feature_map.compute import compute_map
 
 
-def visualize(features, samples):
+def visualize_map(features, samples):
     """
         Visualize the samples and the features on a map. The map cells contains the number of samples for each
         cell, so empty cells (0) are white, cells with few elements have a light color, while cells with more
@@ -22,7 +22,7 @@ def visualize(features, samples):
     # Create one visualization for each pair of self.axes selected in order
     for feature1, feature2 in itertools.combinations(features, 2):
         features_comb = [feature1, feature2]
-        _, coverage_data, misbehaviour_data = compute_featuremap(features_comb, samples)
+        _, coverage_data, misbehaviour_data = compute_map(features_comb, samples)
 
         # figure
         fig, ax = plt.subplots(figsize=(8, 8))
