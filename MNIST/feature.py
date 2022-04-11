@@ -1,5 +1,6 @@
 import numpy as np
 
+from config import NUM_CELLS
 from feature_simulator import FeatureSimulator
 from sample import Sample
 
@@ -9,22 +10,18 @@ class Feature:
     Implements a feature dimension of the Feature map
     """
 
-    def __init__(self,
-                 feature_name: str,
-                 min_value: float, max_value: float,
-                 feature_simulator: FeatureSimulator,
-                 num_cells: int
-                 ):
+    def __init__(self, feature_name: str, min_value: float, max_value: float):
         self.feature_name = feature_name
-        self.feature_simulator = feature_simulator
         self.min_value = min_value
         self.max_value = max_value
-        self.num_cells = num_cells
-        self.original_bins = np.linspace(min_value, max_value, num_cells)
+        # get the name for the corresponding feature simulator
+        self.feature_simulator = dict(FeatureSimulator.get_simulators().items())[feature_name].__name__
+        self.num_cells = NUM_CELLS
+        self.original_bins = np.linspace(min_value, max_value, NUM_CELLS)
         if min_value < 0:
-            self.abs_bins = np.linspace(0, max_value + abs(min_value), num_cells)
+            self.abs_bins = np.linspace(0, max_value + abs(min_value), NUM_CELLS)
         else:
-            self.abs_bins = np.linspace(min_value, max_value, num_cells)
+            self.abs_bins = np.linspace(min_value, max_value, NUM_CELLS)
 
     def feature_descriptor(self, sample: Sample):
         """

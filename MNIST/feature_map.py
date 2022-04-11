@@ -1,104 +1,60 @@
-import json
 import os
+import sys
 
 import matplotlib
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 
 import vectorization_tools
-from config import EXPECTED_LABEL
+from config import EXPECTED_LABEL, META_FILE_DEST
 from feature import Feature
-from feature_simulator import bitmap_count, move_distance, orientation_calc
+from feature_simulator import FeatureSimulator
 from sample import Sample
+from utils import missing
 
 matplotlib.use('Agg')
 import itertools
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-BITMAP_THRESHOLD = 0.5
 
+def extract_samples_and_stats(data, labels):
+    """
+    Iteratively walk in the dataset and process all the json files.
+    For each of them compute the statistics.
+    """
+    # Initialize the stats about the overall features
+    stats = {feature_name: [] for feature_name in FeatureSimulator.get_simulators().keys()}
 
-def _basic_feature_stats():
-    return {
-        'min': np.PINF,
-        'max': np.NINF,
-        'missing': 0
-    }
+    data_samples = []
+    filtered = list(filter(lambda t: t[1] == EXPECTED_LABEL, zip(data, labels)))
+    for idx, item in enumerate(filtered):
+        image, label = item
+        xml_desc = vectorization_tools.vectorize(image)
+        sample = Sample(xml_desc, label)
+        data_samples.append(sample)
+        # update the stats
+        for feature_name, feature_value in sample.features.items():
+            stats[feature_name].append(feature_value)
 
+        # Show the progress
+        sys.stdout.write('\r')
+        progress = int((idx + 1) / len(filtered) * 100)
+        progress_bar_len = 20
+        progress_bar_filled = int(progress / 100 * progress_bar_len)
+        sys.stdout.write(f'[{progress_bar_filled * "="}{(progress_bar_len - progress_bar_filled) * " "}]\t{progress}%')
+        sys.stdout.flush()
+    # New line after the progress
+    print()
 
-def extract_stats(x_test, y_test):
-    features = ["moves", "bitmaps", "orientation"]
-    # Iteratively walk in the dataset and process all the json files. For each of them compute the statistics
-    data = {}
-    # Overall Count
-    data['total'] = 0
-    # Features
-    data['features'] = {f: _basic_feature_stats() for f in features}
+    stats = pd.DataFrame(stats)
+    # compute the stats values for each feature
+    stats = stats.agg(['min', 'max', missing, 'count'])
+    stats.to_csv(META_FILE_DEST, index=False)
+    print(stats.transpose())
 
-    samples = []
-    for seed in range(len(x_test)):
-        if y_test[seed] == EXPECTED_LABEL:
-            seed_image = x_test[seed]
-            xml_desc = vectorization_tools.vectorize(seed_image)
-            sample = Sample(xml_desc, y_test[seed], seed)
-            performance = sample.evaluate()
-            if performance < 0:
-                misbehaviour = True
-            else:
-                misbehaviour = False
-
-            predicted_label = sample.predicted_label
-
-            sample_dict = {
-                "expected_label": str(y_test[seed]),
-                "features": {
-                    "moves": move_distance(sample),
-                    "orientation": orientation_calc(sample),
-                    "bitmaps": bitmap_count(sample)
-                },
-                "id": sample.id,
-                "misbehaviour": misbehaviour,
-                "performance": str(performance),
-                "predicted_label": predicted_label,
-                "seed": seed
-            }
-            seed_image = x_test[seed]
-            xml_desc = vectorization_tools.vectorize(seed_image)
-            sample = Sample(xml_desc, EXPECTED_LABEL, seed)
-            sample.from_dict(sample_dict)
-            samples.append(sample)
-            print(".", end='', flush=True)
-
-            # Total count
-            data['total'] += 1
-
-            # Process only the features that are in the sample
-            for k, v in data['features'].items():
-                # TODO There must be a pythonic way of doing it
-                if k not in sample_dict["features"].keys():
-                    v['missing'] += 1
-
-                    # if report_missing_features:
-                    print("Sample %s miss feature %s", sample_dict["id"], k)
-
-                    continue
-
-                if sample_dict["features"][k] != "None":
-                    v['min'] = min(v['min'], sample_dict["features"][k])
-                    v['max'] = max(v['max'], sample_dict["features"][k])
-
-    for feature_name, feature_extrema in data['features'].items():
-        parsable_string_tokens = ["=".join(["name", feature_name])]
-    for extremum_name, extremum_value in feature_extrema.items():
-        parsable_string_tokens.append("=".join([extremum_name, str(extremum_value)]))
-    print(",".join(parsable_string_tokens))
-
-    filedest = "MNIST.meta"
-    with open(filedest, 'w') as f:
-        (json.dump(data, f, sort_keys=True, indent=4))
-
-    return samples
+    return data_samples, stats
 
 
 def compute_featuremap_3d(features, samples):
@@ -133,7 +89,7 @@ def compute_featuremap_3d(features, samples):
         # Increment the coverage 
         coverage_data[int(sample.expected_label), x_coord, y_coord, z_coord] += 1
 
-        if sample.is_misbehavior():
+        if sample.is_misbehavior:
             # Increment the misbehaviour 
             misbehaviour_data[x_coord, y_coord, z_coord] += 1
 
@@ -141,14 +97,10 @@ def compute_featuremap_3d(features, samples):
 
 
 def compute_featuremap(features, samples):
-    # Generate the map axes
-    map_features = []
-    for f in features:
-        print("Using feature %s" % f[0])
-        map_features.append(Feature(f[0], f[1], f[2], f[3], f[4]))
+    print(f'Using the features {" + ".join([feature.feature_name for feature in features])}')
 
-    feature1 = map_features[0]
-    feature2 = map_features[1]
+    feature1 = features[0]
+    feature2 = features[1]
 
     # Reshape the data as ndimensional array. But account for the lower and upper bins.
     archive_data = np.full([feature1.num_cells, feature2.num_cells], None, dtype=object)
@@ -169,7 +121,7 @@ def compute_featuremap(features, samples):
         # Increment the coverage 
         coverage_data[x_coord, y_coord] += 1
 
-        if sample.is_misbehavior():
+        if sample.is_misbehavior:
             # Increment the misbehaviour 
             misbehaviour_data[x_coord, y_coord] += 1
 
@@ -186,20 +138,10 @@ def visualize(features, samples):
     """
 
     figures = []
-
-    total_samples_in_the_map = samples
-
     # Create one visualization for each pair of self.axes selected in order
     for feature1, feature2 in itertools.combinations(features, 2):
-
-        # Make sure we reset this for each feature combination
-        samples = total_samples_in_the_map
-
-        _features = [feature1, feature2]
-        _, coverage_data, misbehaviour_data = compute_featuremap(_features, samples)
-
-        feature1 = Feature(feature1[0], feature1[1], feature1[2], feature1[3], feature1[4])
-        feature2 = Feature(feature2[0], feature2[1], feature2[2], feature2[3], feature2[4])
+        features_comb = [feature1, feature2]
+        _, coverage_data, misbehaviour_data = compute_featuremap(features_comb, samples)
 
         # figure
         fig, ax = plt.subplots(figsize=(8, 8))
@@ -266,21 +208,15 @@ def visualize(features, samples):
 
 
 if __name__ == "__main__":
+    # Load the data
     mnist = tf.keras.datasets.mnist
     (_, _), (x_test, y_test) = mnist.load_data()
-
-    samples = extract_stats(x_test, y_test)
-    interval = 25
-    features = []
-    with open("MNIST.meta", "r") as f:
-        meta = json.load(f)
-
-    f3 = ["moves", meta["features"]["moves"]["min"], meta["features"]["moves"]["max"], "move_distance", interval]
-    features.append(f3)
-    f2 = ["orientation", meta["features"]["orientation"]["min"], meta["features"]["orientation"]["max"],
-          "orientation_calc", interval]
-    features.append(f2)
-    f1 = ["bitmaps", meta["features"]["bitmaps"]["min"], meta["features"]["bitmaps"]["max"], "bitmap_count", interval]
-    features.append(f1)
-
+    # Extract the samples and the stats
+    samples, stats = extract_samples_and_stats(x_test, y_test)
+    # Get the list of features
+    features = [
+        Feature(feature_name, feature_stats['min'], feature_stats['max'])
+        for feature_name, feature_stats in stats.to_dict().items()
+    ]
+    # Visualize the feature-maps
     visualize(features, samples)

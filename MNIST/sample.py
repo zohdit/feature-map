@@ -6,28 +6,26 @@ import numpy as np
 
 import predictor
 import rasterization_tools
+from feature_simulator import FeatureSimulator
 
 
 class Sample:
-    COUNT = 0
-
-    def __init__(self, desc, label, seed):
-        self.id = Sample.COUNT
-        self.seed = seed
-        self.features = {}
+    def __init__(self, desc, label):
+        self.id = id(self)
         self.xml_desc = desc
         self.expected_label = label
-        self.predicted_label = None
-        self.confidence = None
-        Sample.COUNT += 1
+        self.predicted_label, self.confidence = predictor.Predictor.predict(self.purified_image)
+        self.features = {
+            feature_name: feature_simulator(self)
+            for feature_name, feature_simulator in FeatureSimulator.get_simulators().items()
+        }
 
     def to_dict(self):
-        return {'id': str(self.id),
-                'seed': str(self.seed),
-                'expected_label': str(self.expected_label),
-                'predicted_label': str(self.predicted_label),
-                'misbehaviour': self.is_misbehavior(),
-                'performance': str(self.confidence),
+        return {'id': id(self),
+                'expected_label': self.expected_label,
+                'predicted_label': self.predicted_label,
+                'misbehaviour': self.is_misbehavior,
+                'performance': self.confidence,
                 'features': self.features
                 }
 
@@ -35,14 +33,16 @@ class Sample:
     def purified_image(self):
         return rasterization_tools.rasterize_in_memory(self.xml_desc)
 
+    @property
+    def is_misbehavior(self):
+        return self.expected_label != self.predicted_label
+
     def evaluate(self):
-        ff = None
-        self.predicted_label, self.confidence = predictor.Predictor.predict(self.purified_image)
-
+        """
+        Compute the fitness function
+        """
         # Calculate fitness function
-        ff = self.confidence if self.confidence > 0 else -0.1
-
-        return ff
+        return self.confidence if self.confidence > 0 else -0.1
 
     def from_dict(self, the_dict):
         for k in self.__dict__.keys():
@@ -71,12 +71,6 @@ class Sample:
         with open(filedest, 'w') as f:
             f.write(data)
 
-    def is_misbehavior(self):
-        if str(self.expected_label) == str(self.predicted_label):
-            return False
-        else:
-            return True
-
     def export(self, dst):
         dst = join(dst, "mbr" + str(self.id))
         self.dump(dst)
@@ -85,5 +79,5 @@ class Sample:
         self.save_svg(dst)
 
     def clone(self):
-        clone_digit = Sample(self.xml_desc, self.expected_label, self.seed)
+        clone_digit = Sample(self.xml_desc, self.expected_label)
         return clone_digit

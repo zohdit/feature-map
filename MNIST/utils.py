@@ -1,4 +1,5 @@
 import matplotlib
+import pandas as pd
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -112,3 +113,10 @@ def setup_logging(log_to, debug):
     sys.excepthook = log_exception
 
     log.info(start_msg)
+
+
+def missing(s: pd.Series):
+    """
+    :return: The number of NaN values in a series
+    """
+    return s.isnull().sum()

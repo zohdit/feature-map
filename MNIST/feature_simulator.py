@@ -7,17 +7,16 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 
 from config import BITMAP_THRESHOLD, ORIENTATION_THRESHOLD
-from sample import Sample
 
 NAMESPACE = '{http://www.w3.org/2000/svg}'
 
 
-def bitmap_count(sample: Sample):
+def bitmap_count(sample):
     image = sample.purified_image
     return len(image[image > BITMAP_THRESHOLD])
 
 
-def move_distance(sample: Sample):
+def move_distance(sample):
     root = et.fromstring(sample.xml_desc)
     svg_path = root.find(NAMESPACE + 'path').get('d')
     pattern = re.compile('([\d\.]+),([\d\.]+)\sM\s([\d\.]+),([\d\.]+)')
@@ -36,7 +35,7 @@ def move_distance(sample: Sample):
         return 0
 
 
-def orientation_calc(sample: Sample):
+def orientation_calc(sample):
     # TODO: find out why x and y are inverted
     # convert the image to an array and remove the 1 dimensions (bw) -> 2D array
     image = sample.purified_image
@@ -52,3 +51,11 @@ class FeatureSimulator(Enum):
     BITMAP_COUNT = bitmap_count
     MOVE_DISTANCE = move_distance
     ORIENTATION_CALC = orientation_calc
+
+    @staticmethod
+    def get_simulators():
+        return {
+            'moves': FeatureSimulator.MOVE_DISTANCE,
+            'orientation': FeatureSimulator.ORIENTATION_CALC,
+            'bitmaps': FeatureSimulator.BITMAP_COUNT
+        }
