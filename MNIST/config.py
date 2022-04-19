@@ -1,7 +1,7 @@
 EXPECTED_LABEL = 5
 IMG_SIZE = 28
 NUM_CLASSES = 10
-MODEL = 'models/tf2_model.h5'
+MODEL = 'models/digit_classifier.h5'
 META_FILE_DEST = 'logs/MNIST.csv'
 NUM_CELLS = 25
 BITMAP_THRESHOLD = 0.5

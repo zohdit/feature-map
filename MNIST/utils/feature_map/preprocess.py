@@ -18,11 +18,11 @@ def extract_samples_and_stats(data, labels):
     stats = {feature_name: [] for feature_name in FeatureSimulator.get_simulators().keys()}
 
     data_samples = []
-    filtered = list(filter(lambda t: t[1] == EXPECTED_LABEL, zip(data, labels)))
+    filtered = list(filter(lambda t: t[2] == EXPECTED_LABEL, zip(range(len(data)), data, labels)))
     for idx, item in enumerate(filtered):
-        image, label = item
+        seed, image, label = item
         xml_desc = vectorization_tools.vectorize(image)
-        sample = Sample(xml_desc, label)
+        sample = Sample(seed=seed, desc=xml_desc, label=label)
         data_samples.append(sample)
         # update the stats
         for feature_name, feature_value in sample.features.items():

@@ -1,5 +1,6 @@
 # For Python 3.6 we use the base keras
 import numpy as np
+import tensorflow as tf
 from tensorflow import keras
 
 from config import MODEL, EXPECTED_LABEL, NUM_CLASSES
@@ -20,7 +21,8 @@ class Predictor:
         explabel = np.argmax(explabel.squeeze())
 
         # Predictions vector
-        predictions = Predictor.model.predict(reshape(img))
+        img_rgb = tf.image.grayscale_to_rgb(tf.convert_to_tensor(reshape(img)))
+        predictions = Predictor.model.predict(img_rgb)
 
         prediction1, prediction2 = np.argsort(-predictions[0])[:2]
 

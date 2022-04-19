@@ -43,7 +43,8 @@ def compute_map_3d(features, samples):
 
 
 def compute_map(features, samples):
-    print(f'Using the features {" + ".join([feature.feature_name for feature in features])}')
+    feature_comb_str = "+".join([feature.feature_name for feature in features])
+    print(f'Using the features {feature_comb_str}')
     feature1 = features[0]
     feature2 = features[1]
 
@@ -52,8 +53,10 @@ def compute_map(features, samples):
     # Count the number of items in each cell
     coverage_data = np.zeros(shape=(feature1.num_cells, feature2.num_cells), dtype=int)
     misbehaviour_data = np.zeros(shape=(feature1.num_cells, feature2.num_cells), dtype=int)
+    # Keep track of the seeds clusters
+    clusters = np.empty([feature1.num_cells, feature2.num_cells], dtype=list)
 
-    for sample in samples:
+    for idx, sample in enumerate(samples):
         x_coord = feature1.get_coordinate_for(sample) - 1
         y_coord = feature2.get_coordinate_for(sample) - 1
 
@@ -67,5 +70,14 @@ def compute_map(features, samples):
         # Increment the misbehaviour
         if sample.is_misbehavior:
             misbehaviour_data[x_coord, y_coord] += 1
+        # Update teh clusters
+        if type(clusters[x_coord, y_coord]) is list:
+            clusters[x_coord, y_coord].append(idx)
+        else:
+            clusters[x_coord, y_coord] = [idx]
+
+    # clusters_flat = clusters.flatten()
+    # clusters_flat = clusters_flat[clusters_flat != None]
+    np.save(f'logs/{feature_comb_str}_clusters.npy', clusters)
 
     return archive_data, coverage_data, misbehaviour_data

@@ -10,8 +10,9 @@ from utils import rasterization_tools
 
 
 class Sample:
-    def __init__(self, desc, label):
+    def __init__(self, seed, desc, label):
         self.id = id(self)
+        self.seed = seed
         self.xml_desc = desc
         self.expected_label = label
         self.predicted_label, self.confidence = predictor.Predictor.predict(self.purified_image)
@@ -22,6 +23,7 @@ class Sample:
 
     def to_dict(self):
         return {'id': id(self),
+                'seed': self.seed,
                 'expected_label': self.expected_label,
                 'predicted_label': self.predicted_label,
                 'misbehaviour': self.is_misbehavior,
@@ -79,5 +81,5 @@ class Sample:
         self.save_svg(dst)
 
     def clone(self):
-        clone_digit = Sample(self.xml_desc, self.expected_label)
+        clone_digit = Sample(seed=self.seed, desc=self.xml_desc, label=self.expected_label)
         return clone_digit
