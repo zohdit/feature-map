@@ -76,8 +76,4 @@ def compute_map(features, samples):
         else:
             clusters[x_coord, y_coord] = [idx]
 
-    # clusters_flat = clusters.flatten()
-    # clusters_flat = clusters_flat[clusters_flat != None]
-    np.save(f'logs/{feature_comb_str}_clusters.npy', clusters)
-
-    return archive_data, coverage_data, misbehaviour_data
+    return archive_data, coverage_data, misbehaviour_data, clusters

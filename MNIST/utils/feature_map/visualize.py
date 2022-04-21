@@ -1,11 +1,12 @@
 import itertools
 import os
+import time
 
 import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-from config import EXPECTED_LABEL
+from config import EXPECTED_LABEL, NUM_CELLS
 from utils.feature_map.compute import compute_map
 
 
@@ -20,9 +21,11 @@ def visualize_map(features, samples):
 
     figures = []
     # Create one visualization for each pair of self.axes selected in order
+    data = []
     for feature1, feature2 in itertools.combinations(features, 2):
+        start_time = time.time()
         features_comb = [feature1, feature2]
-        _, coverage_data, misbehaviour_data = compute_map(features_comb, samples)
+        _, coverage_data, misbehaviour_data, clusters = compute_map(features_comb, samples)
 
         # figure
         fig, ax = plt.subplots(figsize=(8, 8))
@@ -76,6 +79,11 @@ def visualize_map(features, samples):
         figures.append(fig)
 
         file_format = 'pdf'
+        data.append({
+            'approach': f'{feature1.feature_name}+{feature2.feature_name}({NUM_CELLS}x{NUM_CELLS})',
+            'map_time': time.time() - start_time,
+            'clusters': clusters
+        })
 
     for figure in figures:
         file_name_tokens = [figure.store_to]
@@ -86,3 +94,5 @@ def visualize_map(features, samples):
         figure_file = os.path.join("logs", figure_file_name)
 
         figure.savefig(figure_file, format=file_format)
+
+    return data
