@@ -80,7 +80,8 @@ def visualize_map(features, samples):
 
         file_format = 'pdf'
         data.append({
-            'approach': f'{feature1.feature_name}+{feature2.feature_name}({NUM_CELLS}x{NUM_CELLS})',
+            'approach': f'{feature1.feature_name}+{feature2.feature_name}',
+            'map_size': f'{NUM_CELLS}x{NUM_CELLS}',
             'map_time': time.time() - start_time,
             'clusters': clusters
         })
