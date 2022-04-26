@@ -32,7 +32,8 @@ if __name__ == "__main__":
     if os.path.isfile(DATA_FILE):
         old_data = pd.read_pickle(DATA_FILE)
         new_data = pd.DataFrame(data)
-        features_df = pd.concat([old_data, new_data]).drop_duplicates(subset='approach', keep='last')
+        features_df = pd.concat([old_data, new_data]).drop_duplicates(subset=['approach', 'map_size'], keep='last')
+        features_df = features_df.reset_index(drop=True)
     else:
         features_df = pd.DataFrame(data)
     features_df.to_pickle(DATA_FILE)
